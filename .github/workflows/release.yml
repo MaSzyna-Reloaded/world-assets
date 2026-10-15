@@ -1,7 +1,8 @@
 name: release
 
 # world_assets.zip - world_assets/<pack>.pck, unzipped into the game directory - built by `make
-# packs` and published on every push to main as the release world-assets-<run number>, the latest.
+# packs` and published: main's newest as the one prerelease MAIN_RELEASE, replaced on every push
+# to main; a pushed tag as a release of its own, named by the tag, the latest.
 # The packs build with no libmaszyna: what their files need is the game's (GAME_REF) gnd-biomes and
 # its double precision Terrain3D (its `make terrain3d`: patched, against libmaszyna's godot-cpp and
 # the engine's API dumped by libmaszyna's Makefile), run by the double precision Godot of
@@ -10,11 +11,17 @@ on:
   push:
     branches:
       - main
+    tags:
+      - '**'
+      # made by the CI itself (a tag it makes starts no workflow anyway)
+      - '!world-assets-main'
   workflow_dispatch:
 
 env:
   # the game's branch whose vendor/ (gnd-biomes, Terrain3D) and patches/ the packs are built with
   GAME_REF: feat/world-pck
+  # main's release, replaced on every push to main
+  MAIN_RELEASE: world-assets-main
 
 permissions:
   contents: write
@@ -65,10 +72,19 @@ jobs:
       - name: Build the packs
         run: make packs GAME="$PWD/game" GODOT=godot-double PACKS_OUT="$PWD/dist"
 
-      - name: Publish world-assets-${{ github.run_number }}
+      - name: Publish the tag's release
+        if: github.ref_type == 'tag'
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          tag="world-assets-${{ github.run_number }}"
-          gh release create "$tag" dist/world_assets.zip --target "$GITHUB_SHA" --title "$tag" --latest \
-            --notes "world_assets/<pack>.pck of ${GITHUB_SHA::7}: unzip into the game directory."
+          gh release create "$GITHUB_REF_NAME" dist/world_assets.zip --verify-tag --title "$GITHUB_REF_NAME" --latest \
+            --notes "world_assets/<pack>.pck of $GITHUB_REF_NAME: unzip into the game directory."
+
+      - name: Publish main's release
+        if: github.ref_type == 'branch'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release delete "$MAIN_RELEASE" --cleanup-tag --yes || true
+          gh release create "$MAIN_RELEASE" dist/world_assets.zip --target "$GITHUB_SHA" --prerelease \
+            --title "$MAIN_RELEASE" --notes "world_assets/<pack>.pck of main at ${GITHUB_SHA::7}: unzip into the game directory."
