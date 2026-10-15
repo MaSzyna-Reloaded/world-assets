@@ -1,4 +1,4 @@
-[gd_scene format=3 uid="uid://xyvswlia1tpw"]
+[gd_scene format=3 uid="uid://dumn7s2s8tfam"]
 
 [ext_resource type="Script" uid="uid://eb0v7nc1t8o3" path="res://addons/gnd_biomes/Biomes.gd" id="1_5csea"]
 [ext_resource type="Terrain3DAssets" uid="uid://db8ul182k1cty" path="res://world_assets/common_terrain/assets.res" id="1_t2f6g"]
@@ -82,7 +82,7 @@ mesh_scene = ExtResource("4_7jqvm")
 billboard_scene = ExtResource("3_ly134")
 probability = 0.35
 billboard_lod_distance = 80.0
-billboard_brightness = 0.3
+billboard_brightness = 0.1
 scale_min = Vector3(2.6, 2.6, 2.6)
 scale_max = Vector3(3.6, 3.6, 3.6)
 
@@ -92,7 +92,7 @@ mesh_scene = ExtResource("6_c7xrd")
 billboard_scene = ExtResource("5_jf6lx")
 probability = 0.25
 billboard_lod_distance = 80.0
-billboard_brightness = 0.3
+billboard_brightness = 0.2
 scale_min = Vector3(1.9, 1.9, 1.9)
 scale_max = Vector3(2.6, 2.6, 2.6)
 
