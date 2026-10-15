@@ -1,16 +1,22 @@
 @tool
 extends RefCounted
 class_name WorldAssetsExport
-## Packs what the worlds share - every directory of MaszynaWorld.ASSETS_RESOURCES_DIR, a pack each
-## (common_terrain, common_facades, common_biomes) - into the game directory's
-## MaszynaWorld.ASSETS_DIR/<pack>.pck, which the game mounts with a world (MaszynaWorld.mount())
-## and the scenery importer reads in the editor. A pack holds a directory's files under their own
-## paths, an imported one (.import beside it) as Godot's export does: its .import and what the
+## Packs what the worlds share - every directory of RESOURCES_DIR, a pack each (common_terrain,
+## common_facades, common_biomes) - into ASSETS_DIR/<pack>.pck of a directory: the game's, which
+## mounts them with a world (libmaszyna's MaszynaWorld.mount()) and whose packs the scenery importer
+## reads in the editor, or a release's (.github/workflows/release.yml). It needs nothing of
+## libmaszyna, so the packs build without it (`make packs`); its paths are MaszynaWorld's
+## (ASSETS_DIR, ASSETS_RESOURCES_DIR, PACK_EXTENSION). A pack holds a directory's files under their
+## own paths, an imported one (.import beside it) as Godot's export does: its .import and what the
 ## import made (.godot/imported/), not its source; a shader with its UID beside it (UID_EXTENSION);
 ## what is no resource (a licence, a glTF's buffer) is left out. A scene's nodes of PREVIEW_GROUP are
 ## this project's - what a pack's content is tuned on here (common_biomes/biomes.tscn's piece of
 ## terrain) - and are left out of the pack's copy of it, with what referred to them.
 
+## Under the directory the packs go into, and where their files are in them
+const ASSETS_DIR: String = "world_assets"
+const RESOURCES_DIR: String = "res://world_assets"
+const PACK_EXTENSION: String = "pck"
 const IMPORT_EXTENSION: String = "import"
 const UID_EXTENSION: String = "uid"
 const PREVIEW_GROUP: StringName = &"world_assets_preview"
@@ -18,20 +24,19 @@ const PREVIEW_GROUP: StringName = &"world_assets_preview"
 const EXPORT_DIR: String = "user://cache/world_assets_export"
 
 
-## Every pack exported; false when one failed
-static func export_all() -> bool:
+## Every pack exported into [param dir]/ASSETS_DIR; false when one failed
+static func export_all(dir: String) -> bool:
     var exported: bool = true
-    for pack: String in DirAccess.get_directories_at(MaszynaWorld.ASSETS_RESOURCES_DIR):
-        exported = export_pack(pack) and exported
+    for pack: String in DirAccess.get_directories_at(RESOURCES_DIR):
+        exported = export_pack(pack, dir) and exported
     return exported
 
 
-## The pack [param pack] exported; false on failure
-static func export_pack(pack: String) -> bool:
+## The pack [param pack] exported into [param dir]/ASSETS_DIR; false on failure
+static func export_pack(pack: String, dir: String) -> bool:
     var files: PackedStringArray = []
-    _collect(MaszynaWorld.ASSETS_RESOURCES_DIR.path_join(pack), files)
-    var path: String = UserSettings.get_maszyna_game_dir().path_join(MaszynaWorld.ASSETS_DIR).path_join(
-            pack + "." + MaszynaWorld.PACK_EXTENSION)
+    _collect(RESOURCES_DIR.path_join(pack), files)
+    var path: String = dir.path_join(ASSETS_DIR).path_join(pack + "." + PACK_EXTENSION)
     DirAccess.make_dir_recursive_absolute(path.get_base_dir())
     var packer: PCKPacker = PCKPacker.new()
     if not packer.pck_start(path) == OK:

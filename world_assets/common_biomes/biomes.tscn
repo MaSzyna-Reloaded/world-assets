@@ -305,7 +305,7 @@ metadata/SimpleGrassTexturedMaterial = "2.1.0"
 
 [node name="BiomesPreview" type="Node3D" unique_id=1867152306]
 
-[node name="Terrain3D" type="Terrain3D" parent="." unique_id=982801425]
+[node name="Terrain3D" type="Terrain3D" parent="." unique_id=982801425 groups=["world_assets_preview"]]
 data_directory = "res://preview/terrain"
 material = SubResource("Terrain3DMaterial_4iqpe")
 assets = ExtResource("1_t2f6g")

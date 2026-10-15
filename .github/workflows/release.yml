@@ -1,0 +1,73 @@
+name: release
+
+# world_assets.zip - world_assets/<pack>.pck, unzipped into the game directory - built by `make
+# packs` and published on every push to main as the release world-assets-<run number>, the latest.
+# The packs build with no libmaszyna: what their files need is the game's (GAME_REF) gnd-biomes and
+# its double precision Terrain3D (its `make terrain3d`: patched, against libmaszyna's godot-cpp and
+# the engine's API dumped by libmaszyna's Makefile), run by the double precision Godot of
+# libmaszyna's release (ci/fetch-godot.sh), as the game's CI fetches it.
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+env:
+  # the game's branch whose vendor/ (gnd-biomes, Terrain3D) and patches/ the packs are built with
+  GAME_REF: feat/world-pck
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          lfs: true
+
+      - name: Checkout the game
+        uses: actions/checkout@v6
+        with:
+          repository: MaSzyna-Reloaded/maszyna-reloaded
+          ref: ${{ env.GAME_REF }}
+          path: game
+          submodules: recursive
+
+      - name: Fetch the double precision Godot
+        run: |
+          game/vendor/libmaszyna/ci/fetch-godot.sh godot.linuxbsd.editor.double.x86_64
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+
+      # Terrain3D's libraries, built again only when its sources, its patches or the godot-cpp
+      # they are built against change
+      - name: Terrain3D's sources
+        id: terrain3d
+        run: |
+          echo "key=terrain3d-$(git -C game rev-parse HEAD:vendor/terrain3d)-$(git -C game/vendor/libmaszyna rev-parse HEAD:godot-cpp)-${{ hashFiles('game/patches/terrain3d-*.patch') }}" >> "$GITHUB_OUTPUT"
+
+      - uses: actions/cache@v4
+        id: terrain3d-cache
+        with:
+          path: game/vendor/terrain3d/project/addons/terrain_3d/bin
+          key: ${{ steps.terrain3d.outputs.key }}
+
+      - name: Build Terrain3D
+        if: steps.terrain3d-cache.outputs.cache-hit != 'true'
+        run: |
+          pipx install scons
+          make -C game/vendor/libmaszyna "$PWD/game/vendor/libmaszyna/extension_api.json" GODOT=godot-double
+          make -C game terrain3d
+
+      - name: Build the packs
+        run: make packs GAME="$PWD/game" GODOT=godot-double PACKS_OUT="$PWD/dist"
+
+      - name: Publish world-assets-${{ github.run_number }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          tag="world-assets-${{ github.run_number }}"
+          gh release create "$tag" dist/world_assets.zip --target "$GITHUB_SHA" --title "$tag" --latest \
+            --notes "world_assets/<pack>.pck of ${GITHUB_SHA::7}: unzip into the game directory."
