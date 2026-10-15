@@ -3,26 +3,35 @@
 
 # The checkouts linked into this project (make links) and its packs built with (make packs) are given
 # explicitly - there is no default: LIBMASZYNA (libmaszyna: its addons/libmaszyna, its vendor/gnd-sfx,
-# its demo's built bin/libmaszyna), GND_BIOMES (godot-biomes: its addons/gnd_biomes) and TERRAIN3D
-# (the addons/terrain_3d of a double precision Terrain3D build), e.g.
-#   make links LIBMASZYNA=<libmaszyna> GND_BIOMES=<godot-biomes> TERRAIN3D=<terrain_3d addon>
+# its demo's built bin/libmaszyna) and GND_BIOMES (godot-biomes: its addons/gnd_biomes), e.g.
+#   make links LIBMASZYNA=<libmaszyna> GND_BIOMES=<godot-biomes>
+# Terrain3D is reloaded-terrain's release (make terrain3d).
 GODOT?=godot-double
 # The make variable $(1) given, else make stops saying what it is ($(2)) and how to give it
 require=$(if $($(1)),,$(error $(1) not given: $(2) - make $@ $(1)=<path>))
 
-.PHONY: links editor packs
+.PHONY: links editor packs terrain3d
+
+# Terrain3D, patched and built double precision, and the worlds' terrain streamer: the release
+# RELOADED_TERRAIN of reloaded-terrain (github.com/MaSzyna-Reloaded/reloaded-terrain, tags
+# YYMMDDHHMM) - its reloaded-terrain-<tag>.zip, addons/terrain_3d and addons/reloaded_terrain, unzipped here
+RELOADED_TERRAIN:=2610152101
+RELOADED_TERRAIN_ZIP:=https://github.com/MaSzyna-Reloaded/reloaded-terrain/releases/download/$(RELOADED_TERRAIN)/reloaded-terrain-$(RELOADED_TERRAIN).zip
+terrain3d:
+	curl -fsSL -o .reloaded-terrain.zip $(RELOADED_TERRAIN_ZIP)
+	unzip -qo .reloaded-terrain.zip
+	rm .reloaded-terrain.zip
+
 
 # The addons of the other repositories, linked as the scenery importer links them
-links:
+links: terrain3d
 	$(call require,LIBMASZYNA,the libmaszyna checkout linked into this project)
 	$(call require,GND_BIOMES,the godot-biomes checkout linked into this project)
-	$(call require,TERRAIN3D,the addons/terrain_3d of a double precision Terrain3D build)
 	mkdir -p addons bin
 	ln -sfn $(LIBMASZYNA)/addons/libmaszyna addons/libmaszyna
 	ln -sfn $(LIBMASZYNA)/vendor/gnd-sfx/addons/gnd_sfx addons/gnd_sfx
 	ln -sfn $(LIBMASZYNA)/demo/bin/libmaszyna bin/libmaszyna
 	ln -sfn $(GND_BIOMES)/addons/gnd_biomes addons/gnd_biomes
-	ln -sfn $(TERRAIN3D) addons/terrain_3d
 
 editor: links
 	$(GODOT) --path . --editor
@@ -36,9 +45,8 @@ editor: links
 # editor does not see it. The CI's release (.github/workflows/release.yml) is this.
 PACKS_PROJECT:=.packs
 PACKS_OUT?=$(PACKS_PROJECT)/out
-packs:
+packs: terrain3d
 	$(call require,GND_BIOMES,the godot-biomes checkout the packs are built with)
-	$(call require,TERRAIN3D,the addons/terrain_3d of a double precision Terrain3D build)
 	mkdir -p $(PACKS_PROJECT)/addons $(PACKS_OUT)
 	printf '%s\n' 'config_version=5' '' '[application]' '' 'config/name="MaSzyna World Assets packs"' \
 		'config/features=PackedStringArray("4.7", "Double Precision", "Forward Plus")' '' \
@@ -48,7 +56,7 @@ packs:
 	ln -sfn ../preview $(PACKS_PROJECT)/preview
 	ln -sfn ../../vendor/world-packer/addons/world_packer $(PACKS_PROJECT)/addons/world_packer
 	ln -sfn $(GND_BIOMES)/addons/gnd_biomes $(PACKS_PROJECT)/addons/gnd_biomes
-	ln -sfn $(TERRAIN3D) $(PACKS_PROJECT)/addons/terrain_3d
+	ln -sfn ../../addons/terrain_3d $(PACKS_PROJECT)/addons/terrain_3d
 	# the first run registers Terrain3D's extension, which the second one loads before importing
 	$(GODOT) --headless --path $(PACKS_PROJECT) --import
 	$(GODOT) --headless --path $(PACKS_PROJECT) --import

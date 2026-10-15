@@ -3,10 +3,10 @@ name: release
 # world_assets.zip - world_assets/<pack>.pck, unzipped into the game directory - built by `make
 # packs` and published: main's newest as the one prerelease MAIN_RELEASE, replaced on every push
 # to main; a pushed tag as a release of its own, named by the tag, the latest.
-# The packs build with no libmaszyna: what their files need is the game's (GAME_REF) gnd-biomes and
-# its double precision Terrain3D (its `make terrain3d`: patched, against libmaszyna's godot-cpp and
-# the engine's API dumped by libmaszyna's Makefile), run by the double precision Godot of
-# libmaszyna's release (ci/fetch-godot.sh), as the game's CI fetches it.
+# The packs build with no libmaszyna: what their files need is gnd-biomes (GND_BIOMES_REF of
+# GamesNotDeveloped/godot-biomes) and Terrain3D with the terrain streamer (reloaded-terrain's release,
+# make terrain3d), run by the double precision Godot of libmaszyna's release (LIBMASZYNA_REF's
+# ci/fetch-godot.sh).
 on:
   push:
     branches:
@@ -18,8 +18,10 @@ on:
   workflow_dispatch:
 
 env:
-  # the game's branch whose vendor/ (gnd-biomes, Terrain3D) and patches/ the packs are built with
-  GAME_REF: feat/world-pck
+  # gnd-biomes, whose scripts the biomes' files name: the commit the game has
+  GND_BIOMES_REF: 429165b8e9a592b73ba4058064aea31051edc86c
+  # the libmaszyna whose engine builds the packs (its GODOT_VERSION, the game's)
+  LIBMASZYNA_REF: feat/world-pck
   # main's release, replaced on every push to main
   MAIN_RELEASE: world-assets-main
 
@@ -36,43 +38,31 @@ jobs:
           lfs: true
           submodules: true
 
-      - name: Checkout the game
+      - name: Checkout gnd-biomes
         uses: actions/checkout@v6
         with:
-          repository: MaSzyna-Reloaded/maszyna-reloaded
-          ref: ${{ env.GAME_REF }}
-          path: game
-          submodules: recursive
+          repository: GamesNotDeveloped/godot-biomes
+          ref: ${{ env.GND_BIOMES_REF }}
+          path: godot-biomes
+
+      - name: Checkout libmaszyna's engine fetching
+        uses: actions/checkout@v6
+        with:
+          repository: MaSzyna-Reloaded/libmaszyna
+          ref: ${{ env.LIBMASZYNA_REF }}
+          path: libmaszyna
+          sparse-checkout: |
+            ci
+            Makefile
+          sparse-checkout-cone-mode: false
 
       - name: Fetch the double precision Godot
         run: |
-          game/vendor/libmaszyna/ci/fetch-godot.sh godot.linuxbsd.editor.double.x86_64
+          libmaszyna/ci/fetch-godot.sh godot.linuxbsd.editor.double.x86_64
           echo "$HOME/.local/bin" >> "$GITHUB_PATH"
 
-      # Terrain3D's libraries, built again only when its sources, its patches or the godot-cpp
-      # they are built against change
-      - name: Terrain3D's sources
-        id: terrain3d
-        run: |
-          echo "key=terrain3d-$(git -C game rev-parse HEAD:vendor/terrain3d)-$(git -C game/vendor/libmaszyna rev-parse HEAD:godot-cpp)-${{ hashFiles('game/patches/terrain3d-*.patch') }}" >> "$GITHUB_OUTPUT"
-
-      - uses: actions/cache@v4
-        id: terrain3d-cache
-        with:
-          path: game/vendor/terrain3d/project/addons/terrain_3d/bin
-          key: ${{ steps.terrain3d.outputs.key }}
-
-      - name: Build Terrain3D
-        if: steps.terrain3d-cache.outputs.cache-hit != 'true'
-        run: |
-          pipx install scons
-          make -C game/vendor/libmaszyna "$PWD/game/vendor/libmaszyna/extension_api.json" GODOT=godot-double
-          make -C game terrain3d
-
       - name: Build the packs
-        run: |
-          make packs GND_BIOMES="$PWD/game/vendor/gnd-biomes" GODOT=godot-double PACKS_OUT="$PWD/dist" \
-            TERRAIN3D="$PWD/game/vendor/terrain3d/project/addons/terrain_3d"
+        run: make packs GND_BIOMES="$PWD/godot-biomes" GODOT=godot-double PACKS_OUT="$PWD/dist"
 
       - name: Publish the tag's release
         if: github.ref_type == 'tag'
