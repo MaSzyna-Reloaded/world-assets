@@ -7,10 +7,15 @@ class_name WorldAssetsExport
 ## and the scenery importer reads in the editor. A pack holds a directory's files under their own
 ## paths, an imported one (.import beside it) as Godot's export does: its .import and what the
 ## import made (.godot/imported/), not its source; a shader with its UID beside it (UID_EXTENSION);
-## what is no resource (a licence, a glTF's buffer) is left out.
+## what is no resource (a licence, a glTF's buffer) is left out. A scene's nodes of PREVIEW_GROUP are
+## this project's - what a pack's content is tuned on here (common_biomes/biomes.tscn's piece of
+## terrain) - and are left out of the pack's copy of it, with what referred to them.
 
 const IMPORT_EXTENSION: String = "import"
 const UID_EXTENSION: String = "uid"
+const PREVIEW_GROUP: StringName = &"world_assets_preview"
+## Where a scene is written without its preview nodes, to be packed
+const EXPORT_DIR: String = "user://cache/world_assets_export"
 
 
 ## Every pack exported; false when one failed
@@ -33,12 +38,42 @@ static func export_pack(pack: String) -> bool:
         push_error("World assets: cannot write %s" % path)
         return false
     for file: String in files:
-        packer.add_file(file, ProjectSettings.globalize_path(file))
+        packer.add_file(file, _without_preview(file))
     if not packer.flush() == OK:
         push_error("World assets: cannot write %s" % path)
         return false
     print("World assets: %s, %d files" % [path, files.size()])
     return true
+
+
+## The file to pack as [param path]: a scene with nodes of PREVIEW_GROUP written without them (and
+## with what referred to them null), else the file itself
+static func _without_preview(path: String) -> String:
+    if not path.get_extension() == "tscn":
+        return ProjectSettings.globalize_path(path)
+    var root: Node = (load(path) as PackedScene).instantiate(PackedScene.GEN_EDIT_STATE_INSTANCE)
+    var previews: Array[Node] = []
+    for node: Node in root.find_children("*", "", true, false):
+        if node.is_in_group(PREVIEW_GROUP):
+            previews.append(node)
+    if not previews:
+        root.free()
+        return ProjectSettings.globalize_path(path)
+    for node: Node in [root] + root.find_children("*", "", true, false):
+        for property: Dictionary in node.get_property_list():
+            var value: Variant = node.get(property["name"]) if property["type"] == TYPE_OBJECT else null
+            if value is Node and value in previews:
+                node.set(property["name"], null)
+    for node: Node in previews:
+        node.get_parent().remove_child(node)
+        node.free()
+    var scene: PackedScene = PackedScene.new()
+    scene.pack(root)
+    root.free()
+    var target: String = ProjectSettings.globalize_path(EXPORT_DIR.path_join(path.trim_prefix("res://")))
+    DirAccess.make_dir_recursive_absolute(target.get_base_dir())
+    ResourceSaver.save(scene, target)
+    return target
 
 
 ## The files of the directory [param dir] that go into its pack, into [param files]
