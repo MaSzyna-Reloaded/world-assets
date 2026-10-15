@@ -1,0 +1,13 @@
+[gd_scene format=3 uid="uid://2ycplhc3yea"]
+
+[ext_resource type="Material" uid="uid://l53lc15p1w2u" path="res://world_assets/common_biomes/generated/biomes_billboards/flowers/02_flower-2_2/billboard_material.tres" id="1_1q253"]
+
+[sub_resource type="QuadMesh" id="QuadMesh_1q253"]
+material = ExtResource("1_1q253")
+size = Vector2(0.7080051446249999, 0.6766611668681639)
+
+[node name="Flower 2 2Billboard" type="Node3D" unique_id=576012792]
+
+[node name="Billboard" type="MeshInstance3D" parent="." unique_id=1134307895]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.33833058343408196, 0)
+mesh = SubResource("QuadMesh_1q253")

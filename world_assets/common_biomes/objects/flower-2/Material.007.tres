@@ -1,0 +1,33 @@
+[gd_resource type="ShaderMaterial" format=3 uid="uid://b44b5xsxiu14y"]
+
+[ext_resource type="Texture2D" uid="uid://caej1g4tx7b6e" path="res://world_assets/common_biomes/objects/flower-2/textures/Material.007_baseColor.png" id="1_etk0a"]
+[ext_resource type="Shader" uid="uid://n08hk3lyymk2" path="res://world_assets/common_biomes/materials/flower_wind.gdshader" id="1_wind"]
+[ext_resource type="Texture2D" uid="uid://bcvcy1df6o3y7" path="res://world_assets/common_biomes/objects/flower-2/textures/Material.007_metallicRoughness.png" id="2_dq3kp"]
+[ext_resource type="Texture2D" uid="uid://blqwub84gr02d" path="res://world_assets/common_biomes/objects/flower-2/textures/Material.007_normal.png" id="3_r3eh7"]
+
+[resource]
+resource_name = "Material.007"
+render_priority = 0
+shader = ExtResource("1_wind")
+shader_parameter/albedo_texture = ExtResource("1_etk0a")
+shader_parameter/use_albedo_texture = true
+shader_parameter/albedo_color = Color(0.90565413, 0.918127, 0.78544647, 1)
+shader_parameter/use_normal_texture = true
+shader_parameter/normal_texture = ExtResource("3_r3eh7")
+shader_parameter/normal_scale = 1.0
+shader_parameter/use_roughness_texture = true
+shader_parameter/roughness_texture = ExtResource("2_dq3kp")
+shader_parameter/roughness = 0.85
+shader_parameter/roughness_texture_channel = 1
+shader_parameter/metallic_specular = 0.18
+shader_parameter/alpha_scissor_threshold = 0.5
+shader_parameter/backlight_color = Color(0.75766265, 0.7255012, 0.61570895, 1)
+shader_parameter/sss_strength = 0.0
+shader_parameter/wind_speed = 1.8270000867825
+shader_parameter/wind_strength = 0.0890000042275
+shader_parameter/trunk_strength = 0.0
+shader_parameter/branch_frequency = 1.62900007667898
+shader_parameter/detail_frequency = 2.49600011786148
+shader_parameter/height_start = 0.2290004858774992
+shader_parameter/height_end = 0.3270004905324999
+shader_parameter/light_mode = 3
