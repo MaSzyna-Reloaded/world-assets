@@ -70,7 +70,9 @@ jobs:
           make -C game terrain3d
 
       - name: Build the packs
-        run: make packs GAME="$PWD/game" GODOT=godot-double PACKS_OUT="$PWD/dist"
+        run: |
+          make packs GND_BIOMES="$PWD/game/vendor/gnd-biomes" GODOT=godot-double PACKS_OUT="$PWD/dist" \
+            TERRAIN3D="$PWD/game/vendor/terrain3d/project/addons/terrain_3d"
 
       - name: Publish the tag's release
         if: github.ref_type == 'tag'

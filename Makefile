@@ -3,11 +3,10 @@
 
 # The checkouts linked into this project (make links) and its packs built with (make packs) are given
 # explicitly - there is no default: LIBMASZYNA (libmaszyna: its addons/libmaszyna, its vendor/gnd-sfx,
-# its demo's built bin/libmaszyna) and GAME (the game: its vendor/gnd-biomes and its double
-# precision Terrain3D, built by its `make terrain3d`), e.g.
-#   make links LIBMASZYNA=<libmaszyna> GAME=<maszyna-reloaded>
+# its demo's built bin/libmaszyna), GND_BIOMES (godot-biomes: its addons/gnd_biomes) and TERRAIN3D
+# (the addons/terrain_3d of a double precision Terrain3D build), e.g.
+#   make links LIBMASZYNA=<libmaszyna> GND_BIOMES=<godot-biomes> TERRAIN3D=<terrain_3d addon>
 GODOT?=godot-double
-TERRAIN3D_ADDON=$(GAME)/vendor/terrain3d/project/addons/terrain_3d
 # The make variable $(1) given, else make stops saying what it is ($(2)) and how to give it
 require=$(if $($(1)),,$(error $(1) not given: $(2) - make $@ $(1)=<path>))
 
@@ -16,13 +15,14 @@ require=$(if $($(1)),,$(error $(1) not given: $(2) - make $@ $(1)=<path>))
 # The addons of the other repositories, linked as the scenery importer links them
 links:
 	$(call require,LIBMASZYNA,the libmaszyna checkout linked into this project)
-	$(call require,GAME,the game checkout whose gnd-biomes and built Terrain3D are linked)
+	$(call require,GND_BIOMES,the godot-biomes checkout linked into this project)
+	$(call require,TERRAIN3D,the addons/terrain_3d of a double precision Terrain3D build)
 	mkdir -p addons bin
 	ln -sfn $(LIBMASZYNA)/addons/libmaszyna addons/libmaszyna
 	ln -sfn $(LIBMASZYNA)/vendor/gnd-sfx/addons/gnd_sfx addons/gnd_sfx
 	ln -sfn $(LIBMASZYNA)/demo/bin/libmaszyna bin/libmaszyna
-	ln -sfn $(GAME)/vendor/gnd-biomes/addons/gnd_biomes addons/gnd_biomes
-	ln -sfn $(TERRAIN3D_ADDON) addons/terrain_3d
+	ln -sfn $(GND_BIOMES)/addons/gnd_biomes addons/gnd_biomes
+	ln -sfn $(TERRAIN3D) addons/terrain_3d
 
 editor: links
 	$(GODOT) --path . --editor
@@ -37,7 +37,8 @@ editor: links
 PACKS_PROJECT:=.packs
 PACKS_OUT?=$(PACKS_PROJECT)/out
 packs:
-	$(call require,GAME,the game checkout whose gnd-biomes and built Terrain3D the packs are built with)
+	$(call require,GND_BIOMES,the godot-biomes checkout the packs are built with)
+	$(call require,TERRAIN3D,the addons/terrain_3d of a double precision Terrain3D build)
 	mkdir -p $(PACKS_PROJECT)/addons $(PACKS_OUT)
 	printf '%s\n' 'config_version=5' '' '[application]' '' 'config/name="MaSzyna World Assets packs"' \
 		'config/features=PackedStringArray("4.7", "Double Precision", "Forward Plus")' '' \
@@ -46,8 +47,8 @@ packs:
 	ln -sfn ../world_assets $(PACKS_PROJECT)/world_assets
 	ln -sfn ../preview $(PACKS_PROJECT)/preview
 	ln -sfn ../../vendor/world-packer/addons/world_packer $(PACKS_PROJECT)/addons/world_packer
-	ln -sfn $(GAME)/vendor/gnd-biomes/addons/gnd_biomes $(PACKS_PROJECT)/addons/gnd_biomes
-	ln -sfn $(TERRAIN3D_ADDON) $(PACKS_PROJECT)/addons/terrain_3d
+	ln -sfn $(GND_BIOMES)/addons/gnd_biomes $(PACKS_PROJECT)/addons/gnd_biomes
+	ln -sfn $(TERRAIN3D) $(PACKS_PROJECT)/addons/terrain_3d
 	# the first run registers Terrain3D's extension, which the second one loads before importing
 	$(GODOT) --headless --path $(PACKS_PROJECT) --import
 	$(GODOT) --headless --path $(PACKS_PROJECT) --import
