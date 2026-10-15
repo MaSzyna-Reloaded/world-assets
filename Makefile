@@ -1,22 +1,28 @@
 # The world assets: what the worlds share (world_assets/<pack>/), edited in this Godot project and
 # exported into the game directory as world_assets/<pack>.pck (Project > Tools > Export world assets)
 
-LIBMASZYNA?=$(abspath ../libmaszyna)
-GAME?=$(abspath ../maszyna-reloaded)
-# the Terrain3D the scenery importer builds (its `make terrain3d`): the same patched build
-IMPORTER?=$(abspath ../scenery-importer)
+# The checkouts linked into this project (make links) and its packs built with (make packs) are given
+# explicitly - there is no default: LIBMASZYNA (libmaszyna: its addons/libmaszyna, its vendor/gnd-sfx,
+# its demo's built bin/libmaszyna) and GAME (the game: its vendor/gnd-biomes and its double
+# precision Terrain3D, built by its `make terrain3d`), e.g.
+#   make links LIBMASZYNA=<libmaszyna> GAME=<maszyna-reloaded>
 GODOT?=godot-double
+TERRAIN3D_ADDON=$(GAME)/vendor/terrain3d/project/addons/terrain_3d
+# The make variable $(1) given, else make stops saying what it is ($(2)) and how to give it
+require=$(if $($(1)),,$(error $(1) not given: $(2) - make $@ $(1)=<path>))
 
 .PHONY: links editor packs
 
 # The addons of the other repositories, linked as the scenery importer links them
 links:
+	$(call require,LIBMASZYNA,the libmaszyna checkout linked into this project)
+	$(call require,GAME,the game checkout whose gnd-biomes and built Terrain3D are linked)
 	mkdir -p addons bin
 	ln -sfn $(LIBMASZYNA)/addons/libmaszyna addons/libmaszyna
 	ln -sfn $(LIBMASZYNA)/vendor/gnd-sfx/addons/gnd_sfx addons/gnd_sfx
 	ln -sfn $(LIBMASZYNA)/demo/bin/libmaszyna bin/libmaszyna
 	ln -sfn $(GAME)/vendor/gnd-biomes/addons/gnd_biomes addons/gnd_biomes
-	ln -sfn $(IMPORTER)/addons/terrain_3d addons/terrain_3d
+	ln -sfn $(TERRAIN3D_ADDON) addons/terrain_3d
 
 editor: links
 	$(GODOT) --path . --editor
@@ -30,8 +36,8 @@ editor: links
 # editor does not see it. The CI's release (.github/workflows/release.yml) is this.
 PACKS_PROJECT:=.packs
 PACKS_OUT?=$(PACKS_PROJECT)/out
-TERRAIN3D_ADDON?=$(GAME)/vendor/terrain3d/project/addons/terrain_3d
 packs:
+	$(call require,GAME,the game checkout whose gnd-biomes and built Terrain3D the packs are built with)
 	mkdir -p $(PACKS_PROJECT)/addons $(PACKS_OUT)
 	printf '%s\n' 'config_version=5' '' '[application]' '' 'config/name="MaSzyna World Assets packs"' \
 		'config/features=PackedStringArray("4.7", "Double Precision", "Forward Plus")' '' \
