@@ -1,0 +1,3 @@
+[submodule "vendor/world-packer"]
+	path = vendor/world-packer
+	url = git@github.com:MaSzyna-Reloaded/world-packer.git

@@ -15,4 +15,4 @@ func _exit_tree() -> void:
 
 
 func _export() -> void:
-    WorldAssetsExport.export_all(UserSettings.get_maszyna_game_dir())
+    WorldAssetsPacker.export_all(UserSettings.get_maszyna_game_dir())
