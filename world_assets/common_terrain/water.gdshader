@@ -1,7 +1,9 @@
 // A water's surface over the ground the scenery importer laid under it: its bed falls from the shore
 // (SITerrain.lower_waters()), so the water is clear where shallow and foams where it meets the ground.
 // The game's water material (textures/@water06.mat, libmaszyna's legacy water.gdshader): the dudv
-// waves, the normal map in RG, the reflection in its alpha.
+// waves, the normal map in RG. Its reflection is the sky's by the Fresnel of a dielectric, not the
+// .mat's metallic 0.9 at glossiness 3500: that made a mirror - the sun a blown white blot as wide as
+// a lake, the rest of the water black.
 shader_type spatial;
 
 render_mode blend_mix, depth_draw_always, cull_back, diffuse_burley, specular_schlick_ggx;
@@ -22,9 +24,10 @@ uniform float shore_depth = 0.25;
 uniform vec4 foam_color : source_color = vec4(0.9, 0.93, 0.92, 0.85);
 // the depth [m] the foam reaches
 uniform float foam_depth = 0.12;
-// @water06.mat param_reflection, param_glossiness, param_wave_strength, param_wave_speed
-uniform float reflection_strength : hint_range(0.0, 1.0) = 0.9;
-uniform float roughness : hint_range(0.0, 1.0) = 0.03;
+// how sharp the sky and the sun lie on the waves; @water06.mat param_wave_strength, param_wave_speed
+uniform float roughness : hint_range(0.0, 1.0) = 0.12;
+// a water's Fresnel at facing (F0 0.02, Godot's specular 0.5 is 0.04)
+uniform float specular : hint_range(0.0, 1.0) = 0.25;
 uniform float wave_strength : hint_range(0.0, 1.0) = 0.05;
 uniform float wave_speed : hint_range(0.0, 1.0) = 0.02;
 
@@ -58,9 +61,9 @@ void fragment() {
     n.z = sqrt(1.0 - clamp(dot(n.xy, n.xy), 0.0, 1.0));
 
     ALBEDO = mix(texture(albedo_texture, water_uv).rgb * tint, foam_color.rgb, foam);
-    METALLIC = clamp(reflection_strength * normal_sample.a, 0.0, 1.0) * (1.0 - foam);
+    METALLIC = 0.0;
     ROUGHNESS = mix(roughness, 1.0, foam);
-    SPECULAR = 1.0;
+    SPECULAR = specular * (1.0 - foam);
     NORMAL_MAP = n * 0.5 + 0.5;
     ALPHA = max(mix(opacity, 1.0, 1.0 - pow(facing, 0.2)) * smoothstep(0.0, shore_depth, depth), foam * foam_color.a);
 }
