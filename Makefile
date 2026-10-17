@@ -38,8 +38,9 @@ editor: links
 
 # The packs and world_assets.zip (world_assets/<pack>.pck, unzipped into the game directory) built
 # headless in a project of their own, PACKS_PROJECT: no libmaszyna, only what the packs' files need
-# (gnd_biomes, whose scripts name its BiomesServer, and Terrain3D - the game's double precision
-# build, its `make terrain3d`), this project's world_assets/ and preview/ linked, its rendering and
+# (gnd_biomes, whose scripts name its BiomesServer, builder_presets, the era presets' class, and
+# Terrain3D - the game's double precision build, its `make terrain3d`), this project's world_assets/
+# and preview/ linked, its rendering and
 # shader globals (the import's settings) taken from project.godot; the export is world-packer's
 # (vendor/world-packer, WorldAssetsPacker). Hidden (a dot), this project's
 # editor does not see it. The CI's release (.github/workflows/release.yml) is this.
@@ -55,6 +56,7 @@ packs: terrain3d
 	ln -sfn ../world_assets $(PACKS_PROJECT)/world_assets
 	ln -sfn ../preview $(PACKS_PROJECT)/preview
 	ln -sfn ../../vendor/world-packer/addons/world_packer $(PACKS_PROJECT)/addons/world_packer
+	ln -sfn ../../vendor/builder-presets/addons/builder_presets $(PACKS_PROJECT)/addons/builder_presets
 	ln -sfn $(GND_BIOMES)/addons/gnd_biomes $(PACKS_PROJECT)/addons/gnd_biomes
 	ln -sfn ../../addons/terrain_3d $(PACKS_PROJECT)/addons/terrain_3d
 	# the first run registers Terrain3D's extension, which the second one loads before importing

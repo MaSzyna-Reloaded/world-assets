@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="EraPreset" format=3 uid="uid://bp733f6ir5oqh"]
+
+[ext_resource type="Script" uid="uid://bjs03re3jffbw" path="res://addons/builder_presets/era_preset.gd" id="1_era"]
+
+; PKP of the 1980s: what the game has of before the modernisations; the rest as EraPreset's
+; contemporary defaults (the modernised platform canopies, the CBP crossing plates, EHZ-13)
+[resource]
+script = ExtResource("1_era")
+; an asphalt platform: the same 1k paving layout as 1k_kostka1 (4096 x 1024, its kerb at v = 1)
+platform_top_texture = "peronowe/1k_asfalt1"
+; the old hectometre post: scenery/przytorowe/slupek_hekto_stary_100.inc (linia053's l053_hekt.scm),
+; the same digit plates with the old digits
+post = "przytorowe/slupek_hekto_stary.t3d"
+post_digit_skin = "przytorowe/hekto_cyfry_stare/%d"
+; a house's fence of wire mesh, not a welded panel (as fence_models' WIRE)
+fence_model = ["ogrodzenia/plotsiatkastara_3m.t3d", 2.975, "X_NEGATIVE"]
+town_benches = [["miejskie/lawka_stara.t3d", "miejskie/lawka_stara", 500.0]]
